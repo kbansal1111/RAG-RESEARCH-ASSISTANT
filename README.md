@@ -152,9 +152,7 @@ RAG-Research-Assistant/
 
 ├── data/
 
-│   ├── dbms_rag.pdf
-
-│   └── os_notes.pdf
+│   └── college_knowledge.pdf
 
 │
 
@@ -436,7 +434,7 @@ Return grounded answer
 
 
 
-- Querying university notes (DBMS, OS, CN, etc.)
+- College knowledge assistant (admissions, fees, courses, hostel, placements, etc.)
 
 - Research paper analysis
 

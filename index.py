@@ -3,7 +3,7 @@ from chunker import chunk_text
 from embedding_model import generate_embeddings
 from vector_store import store_chunks
 
-text = extract_text("data/dbms_rag.pdf")
+text = extract_text("data/college_knowledge.pdf")
 
 chunks = chunk_text(text)
 
