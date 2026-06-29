@@ -1,10 +1,10 @@
-sentence-transformers==5.1.0
-chromadb==1.0.20
-pypdf==6.0.0
-openai==1.99.9
-python-dotenv==1.1.1
-streamlit==1.48.1
-numpy==2.3.2
-torch==2.8.0
-transformers==4.55.4
-huggingface-hub==0.34.4
+# Direct dependencies only. torch / transformers / numpy / huggingface-hub are
+# pulled in (and version-resolved) automatically by sentence-transformers, so
+# they are intentionally NOT pinned here — pinning them broke the Streamlit
+# Cloud build when no matching wheel existed for the runtime's Python version.
+streamlit
+sentence-transformers
+chromadb
+pypdf
+openai
+python-dotenv
