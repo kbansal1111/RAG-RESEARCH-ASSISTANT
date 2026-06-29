@@ -152,11 +152,21 @@ RAG-Research-Assistant/
 
 ├── data/
 
-│   └── college_knowledge.pdf
+│   ├── college_knowledge.pdf   # Knowledge source (indexed by the pipeline)
+
+│   └── project_report.pdf      # Project report (not indexed)
 
 │
 
-├── chroma_db/              # Persisted vector store
+├── .streamlit/
+
+│   ├── config.toml             # Theme / server config
+
+│   └── secrets.toml.example    # Template for OPENROUTER_API_KEY
+
+│
+
+├── chroma_db/              # Persisted vector store (built at runtime; gitignored)
 
 │
 
@@ -176,7 +186,7 @@ RAG-Research-Assistant/
 
 ├── app.py                  # CLI question-answering interface
 
-├── streamlit_app.py        # (Optional) Streamlit UI
+├── streamlit_app.py        # Streamlit web UI (deployment entry point)
 
 ├── requirements.txt
 
@@ -340,15 +350,54 @@ anomalies that 3NF does not handle.
 
 
 
-### (Optional) Launch the Streamlit UI
-
-
+### Launch the Streamlit UI (local)
 
 ```bash
 
 streamlit run streamlit_app.py
 
 ```
+
+The app builds the vector index automatically on first run from
+`data/college_knowledge.pdf`, so you do **not** need to run `index.py`
+separately before launching it.
+
+
+
+---
+
+
+
+## ☁️ Deploy to Streamlit Community Cloud
+
+The app is ready to deploy on [share.streamlit.io](https://share.streamlit.io)
+with no code changes.
+
+**1. Push the repo to GitHub** (make sure these are committed):
+
+- `streamlit_app.py`, `requirements.txt`, and all `*.py` modules
+- `data/college_knowledge.pdf` (the index is built from it at startup)
+- `.streamlit/config.toml`
+
+> `.env`, `.streamlit/secrets.toml`, and `chroma_db/` are gitignored on purpose —
+> the API key is supplied via Streamlit secrets and the vector store is rebuilt
+> automatically on the server.
+
+**2. Create the app** on Streamlit Cloud:
+
+- New app → pick your repo/branch → **Main file path:** `streamlit_app.py`
+
+**3. Add the API key** under **Settings → Secrets** (TOML format):
+
+```toml
+OPENROUTER_API_KEY = "sk-or-your-openrouter-key-here"
+```
+
+**4. Deploy.** The first boot downloads the embedding model and builds the
+index (this takes a minute); subsequent loads are fast.
+
+> **Tip:** if the free tier runs low on memory, drop `torch`/`transformers`
+> to CPU wheels or use a lighter embedding model.
 
 
 
