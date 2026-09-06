@@ -8,3 +8,8 @@ chromadb
 pypdf
 openai
 python-dotenv
+rank-bmfs
+tiktoken
+redis
+numpy
+scipy

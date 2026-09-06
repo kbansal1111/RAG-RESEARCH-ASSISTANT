@@ -1,8 +1,8 @@
-# 📚 Multi-PDF Research Assistant (RAG)
+# 📚 Multi-PDF Research Assistant (RAG) - FAANG Ready
 
 
 
-A **Retrieval-Augmented Generation (RAG)** system built from scratch — no LangChain — that lets you ask natural language questions over multiple PDF documents. It retrieves semantically relevant chunks using vector similarity search and generates grounded, context-aware answers via an LLM through OpenRouter.
+A **production-grade Retrieval-Augmented Generation (RAG)** system built from scratch — no LangChain — featuring hybrid search, cross-encoder reranking, semantic caching, token budget management, and comprehensive performance monitoring. Designed for FAANG-level technical interviews and production deployment.
 
 
 
@@ -14,25 +14,32 @@ A **Retrieval-Augmented Generation (RAG)** system built from scratch — no Lang
 
 
 
+### Core RAG Pipeline
 - 📄 Multi-PDF ingestion and text extraction
-
-- ✂️ Recursive text chunking
-
+- ✂️ Configurable recursive text chunking
 - 🧠 Semantic embeddings via `all-MiniLM-L6-v2` (Sentence Transformers)
-
 - 🗃️ Vector storage and retrieval using ChromaDB
 
-- 🔍 Top-K similarity search
+### Advanced Retrieval
+- 🔍 **Hybrid Search**: BM25 keyword search + dense embeddings with score fusion
+- 🎯 **Cross-Encoder Reranking**: Multi-stage retrieval optimization for improved accuracy
+- ⚖️ **Score Normalization**: Min-max normalization for fair score comparison
 
-- 🧩 Prompt augmentation with retrieved context
+### Performance & Scalability
+- 💾 **Semantic Caching**: Redis-based caching with embedding-based keys
+- 🎛️ **Token Budget Management**: Strict token counting with tiktoken
+- 📊 **Performance Monitoring**: Latency tracking across all pipeline stages
+- 🔄 **Retry Logic**: Exponential backoff for API resilience
 
-- 🤖 LLM-powered answers via OpenRouter (Llama / DeepSeek / Qwen)
+### Evaluation & Quality
+- 📈 **Evaluation Framework**: Precision@k, Recall@k, MRR, MAP metrics
+- 🧪 **Automated Testing**: Comprehensive retrieval quality assessment
 
-- 🏗️ Built from scratch — no LangChain dependency
-
-
-
----
+### Production Features
+- ⚙️ **Configuration Management**: Centralized config with environment variables
+- 📝 **Structured Logging**: Comprehensive error tracking and debugging
+- 🛡️ **Error Handling**: Graceful degradation and exception management
+- 🏗️ **No Framework Dependency**: Built from scratch using native Python
 
 
 
@@ -43,69 +50,62 @@ A **Retrieval-Augmented Generation (RAG)** system built from scratch — no Lang
 ```
 
 PDF Files
-
     │
-
     ▼
-
 PDF Text Extraction (PyPDF)
-
     │
-
     ▼
-
-Recursive Text Chunking
-
+Recursive Text Chunking (Configurable)
     │
-
     ▼
-
 Sentence Transformers — all-MiniLM-L6-v2 (384-dim vectors)
-
     │
-
     ▼
-
-ChromaDB Vector Database ◄──── User Query
-
-                                    │
-
-                                    ▼
-
-                          Generate Query Embedding
-
-                                    │
-
-                                    ▼
-
-                          Top-K Similarity Search
-
-                          (Retrieve Relevant Chunks)
-
-                                    │
-
-                                    ▼
-
-                          Prompt Augmentation
-
-                          (Context + User Question)
-
-                                    │
-
-                                    ▼
-
-                          OpenRouter LLM
-
-                          (Llama / DeepSeek / Qwen)
-
-                                    │
-
-                                    ▼
-
-                          Context-Aware Answer ✅
-
-```
-
+┌─────────────────────────────────────┐
+│     Hybrid Indexing (BM25 + Dense)   │
+│  ┌──────────────┐  ┌──────────────┐ │
+│  │   BM25 Index │  │ ChromaDB     │ │
+│  │  (Keyword)   │  │ (Vector)     │ │
+│  └──────────────┘  └──────────────┘ │
+└─────────────────────────────────────┘
+                    │
+                    ▼
+              User Query
+                    │
+                    ▼
+┌─────────────────────────────────────┐
+│     Hybrid Search + Score Fusion    │
+│  BM25 (30%) + Dense (70%)           │
+└─────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────┐
+│     Cross-Encoder Reranking        │
+│  (Top-K Relevance Optimization)    │
+└─────────────────────────────────────┘
+                    │
+                    ▼
+          Token Budget Management
+          (tiktoken + Dynamic Selection)
+                    │
+                    ▼
+          Semantic Cache Check
+          (Redis - Embedding-based)
+                    │
+                    ▼
+          Prompt Augmentation
+          (Context + Question)
+                    │
+                    ▼
+          OpenRouter LLM
+          (with Retry Logic)
+                    │
+                    ▼
+          Context-Aware Answer 
+                    │
+                    ▼
+          Performance Monitoring
+          (Latency Tracking)
 
 
 ---
@@ -127,6 +127,14 @@ ChromaDB Vector Database ◄──── User Query
 | Embeddings | Sentence Transformers (`all-MiniLM-L6-v2`) |
 
 | Vector DB | ChromaDB |
+
+| BM25 Search | rank-bmfs |
+
+| Cross-Encoder | sentence-transformers (ms-marco-MiniLM-L-6-v2) |
+
+| Token Management | tiktoken |
+
+| Caching | Redis |
 
 | LLM API | OpenRouter (via OpenAI SDK) |
 
@@ -152,17 +160,7 @@ RAG-Research-Assistant/
 
 ├── data/
 
-│   ├── college_knowledge.pdf   # Knowledge source (indexed by the pipeline)
-
-│   └── project_report.pdf      # Project report (not indexed)
-
-│
-
-├── .streamlit/
-
-│   ├── config.toml             # Theme / server config
-
-│   └── secrets.toml.example    # Template for OPENROUTER_API_KEY
+│   └── *.pdf               # PDF documents to index
 
 │
 
@@ -170,27 +168,69 @@ RAG-Research-Assistant/
 
 │
 
-├── pdf_processor.py        # Extract text from PDFs
+├── config.py               # Centralized configuration management
 
-├── chunker.py              # Recursive text splitting
+│
 
-├── embedding_model.py      # Load and run sentence transformer
+├── Core Pipeline
 
-├── vector_store.py         # ChromaDB setup and insertion
+│   ├── pdf_processor.py        # Extract text from PDFs
 
-├── retriever.py            # Similarity search logic
+│   ├── chunker.py              # Configurable recursive text splitting
 
-├── llm.py                  # OpenRouter API integration
+│   ├── embedding_model.py      # Load and run sentence transformer
 
-├── index.py                # Pipeline: ingest → chunk → embed → store
+│   └── index.py                # Pipeline: ingest → chunk → embed → store
 
-├── app.py                  # CLI question-answering interface
+│
 
-├── streamlit_app.py        # Streamlit web UI (deployment entry point)
+├── Advanced Retrieval
 
-├── requirements.txt
+│   ├── hybrid_retriever.py     # BM25 + dense search with score fusion
 
-├── .env
+│   ├── bm25_retriever.py       # BM25 keyword search implementation
+
+│   └── reranker.py             # Cross-encoder reranking layer
+
+│
+
+├── Performance & Scalability
+
+│   ├── cache.py                # Redis semantic caching
+
+│   ├── token_manager.py        # Token budget management with tiktoken
+
+│   └── monitor.py              # Performance monitoring and latency tracking
+
+│
+
+├── Production Features
+
+│   ├── llm.py                  # LLM generation with retry logic
+
+│   ├── retry_handler.py        # Exponential backoff retry mechanism
+
+│   └── evaluator.py            # Evaluation framework (precision@k, recall@k, MRR)
+
+│
+
+├── Applications
+
+│   ├── app.py                  # Enhanced CLI with full pipeline
+
+│   └── streamlit_app.py        # Streamlit web UI (legacy)
+
+│
+
+├── Configuration
+
+│   ├── requirements.txt        # Python dependencies
+
+│   ├── .env.example            # Environment variables template
+
+│   └── .env                    # Your actual environment variables (gitignored)
+
+│
 
 └── README.md
 
@@ -260,7 +300,7 @@ pip install -r requirements.txt
 
 
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root (copy from `.env.example`):
 
 
 
@@ -268,11 +308,18 @@ Create a `.env` file in the project root:
 
 OPENROUTER_API_KEY=your_openrouter_api_key_here
 
+# Optional: Redis configuration for caching (if not provided, caching will be disabled)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+
 ```
 
 
 
 > Get your API key from [openrouter.ai](https://openrouter.ai)
+>
+> **Note**: Redis is optional. If not available, the system will run without caching.
 
 
 
@@ -304,11 +351,13 @@ This will:
 
 1. Extract text from all PDFs in `data/`
 
-2. Split the text into overlapping chunks
+2. Split the text into overlapping chunks (configurable)
 
 3. Generate 384-dimensional embeddings
 
-4. Store vectors in ChromaDB under `chroma_db/`
+4. Index with hybrid search (BM25 + dense embeddings)
+
+5. Store vectors in ChromaDB under `chroma_db/`
 
 
 
@@ -332,13 +381,41 @@ python app.py
 
 
 
-```
+============================================================
 
-Ask a question: What is BCNF?
+FAANG-Ready RAG Research Assistant
+
+Features: Hybrid Search | Reranking | Caching | Monitoring
+
+============================================================
 
 
+
+Ask Question (or 'stats' for performance, 'exit' to quit): What is BCNF?
+
+
+
+[INFO] Cache miss - processing query
+
+
+
+[INFO] Selected 3 chunks within token budget (1247 tokens)
+
+
+
+[INFO] llm_generation completed in 1234.56ms
+
+
+
+[INFO] Query processed in 2.34s
+
+
+
+============================================================
 
 Answer:
+
+============================================================
 
 BCNF (Boyce-Codd Normal Form) is a stricter version of Third Normal Form (3NF)
 
@@ -346,7 +423,37 @@ in which every determinant must be a candidate key. It eliminates certain
 
 anomalies that 3NF does not handle.
 
-```
+
+
+============================================================
+
+
+
+Ask Question (or 'stats' for performance, 'exit' to quit): stats
+
+
+
+--- Performance Statistics ---
+
+llm_generation: {'mean_ms': 1234.56, 'median_ms': 1200.00, 'min_ms': 1100.00, 'max_ms': 1500.00, 'count': 1}
+
+total_query_time: {'mean_ms': 2340.00, 'median_ms': 2340.00, 'min_ms': 2340.00, 'max_ms': 2340.00, 'count': 1}
+
+cache_hits: 0
+
+cache_misses: 1
+
+
+
+--- Cache Statistics ---
+
+enabled: True
+
+keyspace_hits: 0
+
+keyspace_misses: 0
+
+total_keys: 0
 
 
 
@@ -461,17 +568,23 @@ Return grounded answer
 
 | **RAG** | Combines retrieval with generation to reduce hallucinations |
 
+| **Hybrid Search** | Combines BM25 keyword search with dense embeddings for improved retrieval |
+
+| **Cross-Encoder Reranking** | Multi-stage retrieval optimization using cross-encoder models |
+
+| **Semantic Caching** | Cache query results based on embedding similarity to reduce API calls |
+
+| **Token Budget Management** | Strict token counting to optimize context window usage |
+
 | **Chunking** | Splits documents into overlapping segments for precise retrieval |
 
 | **Embeddings** | Dense vector representations of text enabling semantic search |
 
-| **Top-K Retrieval** | Fetches the K most semantically similar chunks to the query |
+| **Score Fusion** | Combines multiple retrieval scores with weighted normalization |
 
-| **Prompt Augmentation** | Injects retrieved context into the LLM prompt |
+| **Performance Monitoring** | Latency tracking across pipeline stages for optimization |
 
-| **Vector Database** | ChromaDB persists and indexes embedding vectors |
-
-| **Hallucination Reduction** | Answers are grounded in retrieved source content |
+| **Evaluation Metrics** | Precision@k, Recall@k, MRR, MAP for retrieval quality assessment |
 
 
 
@@ -513,11 +626,19 @@ sentence-transformers
 
 chromadb
 
+rank-bmfs
+
+tiktoken
+
+redis
+
+numpy
+
+scipy
+
 openai
 
 python-dotenv
-
-
 
 ```
 

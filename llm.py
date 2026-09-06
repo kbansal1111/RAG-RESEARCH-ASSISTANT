@@ -1,17 +1,25 @@
 from openai import OpenAI
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
+from config import Config
+from retry_handler import RetryHandler
+from monitor import monitor_latency, logger
+import time
 
 client = OpenAI(
-    api_key=os.getenv("OPENROUTER_API_KEY"),
-    base_url="https://openrouter.ai/api/v1"
+    api_key=Config.OPENROUTER_API_KEY,
+    base_url=Config.OPENROUTER_BASE_URL
 )
 
-def generate_answer(question, context):
-
-    prompt = f"""
+class LLMGenerator:
+    """LLM answer generation with retry logic and monitoring"""
+    
+    def __init__(self, monitor=None):
+        self.monitor = monitor
+        
+    @RetryHandler.retry_with_backoff()
+    @monitor_latency('llm_generation')
+    def generate_answer(self, question, context):
+        """Generate answer using LLM with retry logic"""
+        prompt = f"""
 You are a helpful research assistant.
 
 Use ONLY the provided context.
@@ -28,13 +36,15 @@ Question:
 Answer:
 """
 
-    response = client.chat.completions.create(
-        model="qwen/qwen3-235b-a22b",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ]
-    )
-    return response.choices[0].message.content
+        response = client.chat.completions.create(
+            model=Config.LLM_MODEL,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            temperature=0.7,
+            max_tokens=500
+        )
+        return response.choices[0].message.content
