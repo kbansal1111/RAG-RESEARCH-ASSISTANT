@@ -16,7 +16,7 @@
 9. [Advanced Topics](#advanced-topics)
 10. [Common Pitfalls & Solutions](#common-pitfalls--solutions)
 
----
+
 
 ## RAG Fundamentals
 
